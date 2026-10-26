@@ -15,7 +15,8 @@
 5. [关键"类与函数"说明](#5-关键类与函数说明)
 6. [依赖关系](#6-依赖关系)
 7. [项目运行方式](#7-项目运行方式)
-8. [术语表](#8-术语表)
+8. [版本演进](#8-版本演进)
+9. [术语表](#9-术语表)
 
 ---
 
@@ -36,7 +37,7 @@
 
 这不是传统的可执行代码项目，而是一个**内容即代码（Docs-as-Code）仓库**：
 
-- **核心资产**是 35 个技能目录，每个目录至少含一个 `SKILL.md`（提示词/行为契约），可选含附属参考文件（格式模板、脚本）。
+- **核心资产**是 38 个技能目录（22 个 promoted + 16 个非 promoted），每个目录至少含一个 `SKILL.md`（提示词/行为契约），可选含附属参考文件（格式模板、脚本）。
 - **无构建产物、无测试套件、无应用入口**。`package.json` 仅有 changesets 版本管理依赖。
 - 技能通过 `npx skills@latest add mattpocock/skills`（skills.sh 安装器）分发给终端用户，或通过 `.claude-plugin/plugin.json` 作为 Claude 插件分发。
 
@@ -62,7 +63,7 @@
 ┌─────────────────────────────────────────────────────────────────────┐
 │                          技能层（skills/）                            │
 │                                                                       │
-│  ┌── engineering/（15 个，进入插件与 README）────────────────────┐    │
+│  ┌── engineering/（17 个目录，16 个进入插件与顶层 README）────────┐    │
 │  │  路由: ask-matt                                               │    │
 │  │  主流程: grill-with-docs → to-spec → to-tickets → implement    │    │
 │  │  匝道: triage · diagnosing-bugs · wayfinder                    │    │
@@ -149,6 +150,7 @@
 │   │   ├── domain-modeling/       #     +ADR-FORMAT.md / CONTEXT-FORMAT.md
 │   │   ├── codebase-design/       #     +DEEPENING.md / DESIGN-IT-TWICE.md
 │   │   ├── code-review/           #     双轴 diff 审查
+│   │   ├── resolving-merge-conflicts/  # 冲突解决循环（⚠️ 未进 plugin.json）
 │   │   └── README.md              #     分 User/Model 两组列出
 │   ├── productivity/              #   通用工作流技能（5 个，promoted）
 │   │   ├── grill-me/ grilling/ handoff/ teach/ writing-great-skills/
@@ -168,7 +170,7 @@
 │       ├── design-an-interface/ qa/ request-refactor-plan/ ubiquitous-language/
 │       └── README.md
 ├── docs/                          # 人向文档页（镜像 promoted 桶），发布到 aihero.dev
-│   ├── engineering/               #   15 个技能各一页
+│   ├── engineering/               #   17 个技能各一页（含 resolving-merge-conflicts）
 │   └── productivity/              #   5 个技能各一页
 ├── .agents/                       # 维护者治理文档
 │   ├── invocation.md              #   user/model 调用轴规范
@@ -192,9 +194,9 @@
 
 ## 4. 主要模块职责
 
-### 4.1 engineering 桶（15 个技能）— 日常代码工作
+### 4.1 engineering 桶（17 个技能）— 日常代码工作
 
-#### User-invoked（用户键入触发，8 个）
+#### User-invoked（用户键入触发，9 个）
 
 | 技能 | 职责 | 输入 → 产物 | 关键机制 |
 |------|------|------------|---------|
@@ -208,7 +210,7 @@
 | **implement** | 执行 spec/ticket/agent brief 描述的工作 | 工作单元 → 代码 + 测试提交 | 仅 15 行：驱动 `/tdd`、收尾 `/code-review` |
 | **wayfinder** | 规划超出单 session 容量的巨型工程 | 模糊想法 → map issue + 子调查 tickets | "产出决策而非交付物"；4 类 ticket（Research/Prototype/Grilling/Task）；雾区（Not yet specified）逐块毕业；每 session 只解析一张 |
 
-#### Model-invoked（模型可自动触发，7 个）
+#### Model-invoked（模型可自动触发，8 个）
 
 | 技能 | 职责 | 关键机制 |
 |------|------|---------|
@@ -219,6 +221,7 @@
 | **domain-modeling** | 主动构建与锐化领域模型 | 5 个会话动作（挑战/锐化/压力测试/交叉验证/即时更新）；CONTEXT.md 纯词汇表、惰性创建；ADR 三条件门槛；`CONTEXT-FORMAT.md`/`ADR-FORMAT.md` 定格式 |
 | **codebase-design** | "深模块"设计词汇与原则 | 词汇表（module/interface/seam/depth/adapter…）+ 术语纪律；`DEEPENING.md` 依赖四分类（in-process/local-substitutable/remote-but-owned/true external）与 "replace, don't layer"；`DESIGN-IT-TWICE.md` 并行子代理出多接口方案 |
 | **code-review** | 双轴 diff 审查 | Standards 轴（仓库标准 + 内置 Fowler 12 坏味道基线）与 Spec 轴（忠实实现 issue/PRD）各一个并行子代理，聚合不合并不跨轴重排 |
+| **resolving-merge-conflicts** | 按意图解决进行中的 git merge/rebase 冲突 | 5 步循环：看当前状态 → 溯源每边的 primary source（commit/PR/issue）→ 逐 hunk 解决（保留双方意图；不兼容时按合并目标取舍并记录权衡；**永不发明新行为、永不 `--abort`**）→ 发现并运行项目自动检查（typecheck→tests→format）→ 完成合并/rebase。完全独立，无技能依赖 |
 
 ### 4.2 productivity 桶（5 个技能）— 通用工作流
 
@@ -243,11 +246,46 @@
 
 | 目录/文件 | 职责 |
 |-----------|------|
-| `docs/` | 15+5 个 promoted 技能的人向文档页，目录树镜像 `skills/` 的两个 promoted 桶；发布 URL 一律 `https://aihero.dev/skills-<name>`；页面模板与 Done 清单见 `.agents/writing-docs.md` |
+| `docs/` | **22 页**人向文档页（engineering 17 + productivity 5），目录树镜像 `skills/` 的两个 promoted 桶，与 SKILL.md 一一对应；发布 URL 一律 `https://aihero.dev/skills-<name>`；页面模板与 Done 清单见 `.agents/writing-docs.md`（详见 4.5） |
 | `.agents/` | 维护者规范：`invocation.md`（调用轴）、`writing-docs.md`（文档页模板）、`adr/`（本仓库自身的 ADR） |
-| `.out-of-scope/` | `triage` 技能的拒绝知识库在**本仓库自身**上的实例（`mainstream-issue-trackers-only.md`、`question-limits.md`、`setup-skill-verify-mode.md`）——自反示范 |
+| `.out-of-scope/` | `triage` 技能的拒绝知识库在**本仓库自身**上的实例——自反示范（3 个文件详见下文） |
 | `CONTEXT.md` | 本仓库自身的领域术语表（Issue tracker / Issue / Triage role），同样是自反示范 |
 | `CLAUDE.md` | 面向 agent 的维护规则：桶的晋升规则（promoted 必须进 README 与 plugin.json）、docs 页同步规则、ask-matt 路由器同步规则 |
+| 杂项 | `.gitignore` 仅忽略 `node_modules`；`LICENSE` 为 MIT（Copyright (c) 2026 Matt Pocock）；`.changeset/README.md` 为 changesets 官方脚手架说明 |
+
+**`.out-of-scope/` 拒绝知识库的 3 条记录**（每条 = 结论 + 理由 + 逃生口 + 先例 issue）：
+
+| 文件 | 拒绝的请求 | 核心理由 | 先例 |
+|------|-----------|---------|------|
+| `mainstream-issue-trackers-only.md` | 为小众/新兴 tracker 添加后端 | 每个 tracker 后端都把 CLI 形状硬编码进技能，是永久维护面；"主流"判据是典型工程师是否认识该工具（GitHub/GitLab/Backlog.md 算，几百 stars 的新工具不算） | #99（dex，~300 stars） |
+| `question-limits.md` | 给 grilling 加问题数硬上限 | 开放性是设计使然；硬上限会混淆两个失败模式——计划欠明确（正常）vs 问题质量差（应修 prompt 而非加计数器） | #44（"Codex 问了 200 个问题"） |
+| `setup-skill-verify-mode.md` | 为 setup 技能加 verify 模式或兄弟技能 | prompt 驱动的技能用自然语言即可 scoped 到验证趟；两个技能会随种子模板演化而漂移 | #106 |
+
+### 4.5 docs/ 发布文档系统
+
+22 页与 22 个 promoted `SKILL.md` 严格一一对应（双向无遗漏）。所有页面遵循统一框架（`.agents/writing-docs.md`）：
+
+1. **Quickstart**：`npx skills add mattpocock/skills --skill=<name>` + `npx skills update <name>`；
+2. **Source**：指向 GitHub 源目录的绝对链接；
+3. **What it does**：一句话定位 + **定义性约束**（defining constraint）——全页最值钱的一句，如 code-review 的"两轴永不合并"、diagnosing-bugs 的"No red-capable loop, no diagnosis"、wayfinder 的"只规划不执行"；
+4. **When to reach for it**：调用模式（人键入 or 模型自动）+ 触发边界 + 易混技能的分流指引；
+5. **Prerequisites**（可选，8 页有）；
+6. **自由中间章节**（1-3 个，必须浮现技能的 leading word）；
+7. **It's working if**（可选，仅 engineering 桶 10 页有）；
+8. **Where it fits**（必有）：角色定位 + 邻居技能 + 指向 ask-matt 的收尾句——每页是分布式路由的一个节点。
+
+**纪律**：全部链接为绝对链接（`https://aihero.dev/skills-<name>` / `github.com`），因为发布后相对链接会断；页面无 H1（标题由发布层 slug 提供）。**特征章节** `## Pulled out on purpose`（"刻意单源"声明）仅出现在三个词汇单源技能：codebase-design、domain-modeling、grilling。
+
+### 4.6 仓库已知一致性问题（如实记录）
+
+CLAUDE.md 规定"engineering/ 的每个技能必须进顶层 README 与 plugin.json"，但当前存在同步漂移：
+
+| 问题 | 详情 |
+|------|------|
+| `resolving-merge-conflicts` 未收录 | 有 SKILL.md（engineering 桶）+ docs 页，但**缺席** plugin.json、顶层 README、桶 README 三处 |
+| `implement` 漏列桶 README | 在 plugin.json、顶层 README、docs 页齐全，但 `skills/engineering/README.md` 漏列 |
+| docs 悬空链接 | `docs/engineering/research.md` 链接到 `https://aihero.dev/skills-to-prd`——to-prd 已在 1.1.0 更名为 to-spec，目标页不存在 |
+| docs 残留标记 | `docs/engineering/to-spec.md` 与 `to-tickets.md` 文件末尾残留 `</content>` 字样 |
 
 ---
 
@@ -321,7 +359,7 @@ for DEST in DESTS:
 
 | 文件 | 内容 |
 |------|------|
-| `.claude-plugin/plugin.json` | 插件清单：`name: mattpocock-skills` + 21 个技能路径数组（engineering 15 + productivity 5 + 顶格列出，与 README 严格同步） |
+| `.claude-plugin/plugin.json` | 插件清单：`name: mattpocock-skills` + **21 个技能路径**（engineering 16 + productivity 5）；注意 `resolving-merge-conflicts` 有 SKILL.md 与 docs 页但未收录（见 4.6） |
 | `package.json` | `name: mattpocock-skills`、`private: true`；scripts 仅 `changeset`/`version`；devDependencies 仅 `@changesets/cli` + `@changesets/changelog-github`；`packageManager: npm@10.9.4` |
 | `.changeset/config.json` | changelog 用 `@changesets/changelog-github`（指向 mattpocock/skills）；`privatePackages: {version: true}`（私有包照样打版本）；baseBranch main |
 | `.github/workflows/release.yml` | main 推送触发；Node 22 + `npm ci`；`changesets/action` 创建 "chore: version skills" 版本 PR，合并后 `changeset tag` 打 tag |
@@ -356,7 +394,7 @@ tdd ──重构归 review 阶段──▶ code-review
 
 【纯被调用方 / 完全独立】
 domain-modeling：不调用他人，被 grill-with-docs / improve-codebase-architecture / wayfinder 调用
-prototype、research：互不调用，自成一体
+prototype、research、resolving-merge-conflicts：互不调用，自成一体
 ```
 
 ### 6.2 跨桶依赖
@@ -474,7 +512,21 @@ git push                    # CI 自动开 "chore: version skills" 版本 PR
 
 ---
 
-## 8. 术语表
+## 8. 版本演进（CHANGELOG）
+
+CHANGELOG 由 changesets 自动生成（`@changesets/changelog-github`），每条带 PR/commit 链接。三个版本完整记录了技能集的演化路径，是理解当前命名与结构的最佳背景材料：
+
+| 版本 | 关键变化 |
+|------|---------|
+| **1.0.0**（架构定型） | ① 新增 **ask-matt** 路由器（Breaking：要求安装全部 user-invoked 技能）；② 从 improve-codebase-architecture/tdd 中抽出**共享技能** `codebase-design`（原 LANGUAGE.md）与 `domain-modeling`（Breaking：新增依赖）；③ `diagnose` → **diagnosing-bugs** 改名；④ `write-a-skill` → **writing-great-skills** 替换；⑤ **grilling** 独立为 model-invoked 技能（grill-me/grill-with-docs 的共享内核）；⑥ 新增 **resolving-merge-conflicts**（独立无依赖）；⑦ 术语分类从 Commands/Skills 更名为 **User-invoked/Model-invoked**；⑧ 移除 caveman、zoom-out |
+| **1.0.1** | `teach` 改为 **reuse-first**：课程从 `./assets/` 可复用组件构建，禁止内联未来会重复的代码 |
+| **1.1.0**（大整合） | ① **ask-matt 路由补全** 5 个缺失技能（tdd、diagnosing-bugs、domain-modeling、codebase-design、grilling）；② `in-progress/review` 毕业 → **code-review**，新增 Fowler 12 坏味道基线；③ **grilling** 加确认门（用户确认共识前不动手）+ **事实/决策分离**（修复 grilling agent 自问自答）；④ writing-great-skills 新增 **Negation** 与 **Negative Space** 失败模式；⑤ **prototype** 改为 model-invoked；⑥ 新增 **research**；⑦ `to-prd` → **to-spec** 更名；`to-plan` + `to-issues` 合并为 **to-tickets**（阻塞边 + expand–contract 宽重构支持）；⑧ `in-progress/decision-mapping` 毕业 → **wayfinder**（确立 fog of war / frontier / map 主导词框架、四类 ticket、HITL/AFK 分类、原生 blocking、map=共享 issue）；⑨ **tdd** 重塑为纯 reference（红→绿；重构移交 code-review；新增同义反复测试反模式）；⑩ **triage** 支持外部 PR（"PR = 带代码的 issue"，setup 增加开关）；⑪ wayfinder 修复硬编码 tracker 路径（改走 `## Agent skills` 指针的间接层） |
+
+**演化规律**：技能命名持续向 leading word 收敛（diagnose→diagnosing-bugs、decision-mapping→wayfinder、to-prd→to-spec）；共享纪律不断从单技能抽出为独立技能（codebase-design、domain-modeling、grilling）；in-progress 桶是毕业通道（wayfinder、code-review 均由此晋升）。
+
+---
+
+## 9. 术语表
 
 摘自本仓库 `CONTEXT.md` 与 `writing-great-skills`（阅读其余文档前建议先掌握）：
 
@@ -493,4 +545,4 @@ git push                    # CI 自动开 "chore: version skills" 版本 PR
 
 ---
 
-*本文档基于仓库 commit 状态（2026-10）生成；技能清单与调用关系以 `skills/` 各 `SKILL.md`、`.claude-plugin/plugin.json` 与顶层 `README.md` 为准。*
+*本文档基于仓库当前状态（2026-10，v1.1.0）生成；技能清单与调用关系以 `skills/` 各 `SKILL.md`、`.claude-plugin/plugin.json` 与顶层 `README.md` 为准，4.6 节记录的漂移点已如实标注。*
